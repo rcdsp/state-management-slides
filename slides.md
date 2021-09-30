@@ -88,8 +88,9 @@ image: https://source.unsplash.com/collection/94734566/1920x1080
   <li v-click>Tools for each case</li>
 </ul>
 
-<span  v-click class="text-gray-500">This is still redux vs context ⚔️</span>
-<span  v-click class="text-gray-500">...and a bit of TypeScript 🙀</span>
+<span  v-click class="text-gray-500">This is still redux vs context ⚔️ (not really)</span>
+<br>
+<span  v-click class="text-gray-500"> ...and a bit of TypeScript 🙀</span>
 
 <!--
 Points we will be touching
@@ -290,35 +291,64 @@ const CounterPage: FC = () => {
 
 ---
 
-# Diagrams
+<h1><span>State Collocation</span></h1>
+<p>Context vs Global State (with redux)</p>
 
-You can create diagrams / graphs from textual descriptions, directly in your Markdown.
+<p>When we found that our application requires this component's state to either lift too high or drill props too deep, we should start thinking on moving that state to a Context or Global State.</p>
 
-<div class="grid grid-cols-2 gap-10 pt-4 -mb-6">
+<p v-click>Lets discuss each option:</p>
 
-```mermaid {scale: 0.9}
-sequenceDiagram
-    Alice->John: Hello John, how are you?
-    Note over Alice,John: A typical interaction
-```
+<h3 v-click>Context</h3>
+<p v-click>✔️ Is natively in react</p>
+<p v-click>✔️ Easy to setup, provide and consume.</p>
+<p v-click>✔️ Providers can be combined just as reducers (just providers).</p>
 
-```mermaid {theme: 'neutral', scale: 0.8}
-graph TD
-B[Text] --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
+<p v-click>Using Context can be a tempting and in some cases good option but it has serious drawbacks that need considering.</p>
 
-</div>
+---
 
-[Learn More](https://sli.dev/guide/syntax.html#diagrams)
+<h1><span>State Collocation</span></h1>
+<p>Context vs Global State (with redux)</p>
+
+<h3>Context</h3>
+<p v-click>❌ Rerendering performance issues.</p>
+<p v-click>❌ Does not support selectors.</p>
+<p v-click>❌ Not the best for frequent updates.</p>
+
+<p v-click>Using Context for features that related might be a good option, as long as we're ok with re-rendering all components consuming a given context. So this applies to the concept of related "close" components that might need to re-render together when state changes.</p>
+
+<p v-click>It is important to know that without selectors, no matter which props are being used and changed, all components deppending on that context will re-render.</p>
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context vs Global State (with redux)</p>
+
+<h3 v-click>Global State With Redux</h3>
+
+<p v-click>When we need better control for re-rendering and we need state that needs to spread wider in our application, it would be a better option to go for Global State</p>
+
+<h3>Redux</h3>
+<p v-click>✔️ Wideley used and known.</p>
+<p v-click>✔️ Framework agnostic (Mostly).</p>
+<p v-click>✔️ Flexible workflow that allows more granular control.</p>
+<p v-click>✔️ Dev tools are pretty cool.</p>
+
+<p v-click>Redux has been out there for a while, its well documented and can work with many types of applications, it is a very powerful tool which can also make it a complicated one specially when applications get large.</p>
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context vs Global State (with redux)</p>
+
+<h3>Redux</h3>
+<p v-click>❌ Boilerplate can be descriptive but also daunting.</p>
+<p v-click>❌ Tricky to maintain Global State and Context or component state together.</p>
+<p v-click>❌ Requires more steps to test (this also applys to context at a smaller degree).</p>
+<p v-click>❌ Global State can grew big.</p>
+
+<p v-click></p>
+
 
 
 ---
-layout: center
-class: text-center
----
-
-# Learn More
-
-[Documentations](https://sli.dev) · [GitHub](https://github.com/slidevjs/slidev) · [Showcases](https://sli.dev/showcases.html)
