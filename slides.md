@@ -727,6 +727,7 @@ Some of the concerns specific to server data state.
 -->
 
 ---
+
 <h1><span>UI State vs Server (Data) State</span></h1>
 <p>SWR and React Query</p>
 
@@ -734,8 +735,6 @@ Some of the concerns specific to server data state.
 
 ```tsx{all|5|9-11|all}
 import useSWR from 'swr';
-import { FC } from 'react';
-import { Post } from '../../services/api';
 
 const PostList: FC = () => {
   /* error and loading state can also be obtained from useSWR */
@@ -810,22 +809,49 @@ ErrorBoundary catches errors bubling up from components below.
 <h1><span>UI State vs Server (Data) State</span></h1>
 <p>RKT Query</p>
 
-<p>This is how we would wrap with Suspense:</p>
+<p>On the other hand RKT Query builds on top oc its own RTK API:</p>
 
-```tsx{all|5|9-11|all}
-const usePosts = () => {
-  const { data, error } = useSWR(`https://jsonplaceholder.typicode.com/posts`)
+```ts{all|1|3-8|all}
+// Need to use the React-specific entry point to import createApi
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-  return {
-    posts: data,
-    isLoading: !error && !data,
-    isError: error
-  }
+export type Post = {
+  userId: number;
+  id: number;
+  title: string;
+  body: string;
 };
 
 ```
 <!-- 
-We would end up consuming usePosts wherever we need posts data.
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>RKT Query</p>
+
+```ts{all|2|4-6|7-14|all}
+// Define a service using a base URL and expected endpoints
+export const api = createApi({
+  reducerPath: 'api',
+  baseQuery: fetchBaseQuery({
+    baseUrl: 'https://jsonplaceholder.typicode.com',
+  }),
+  endpoints: (builder) => ({
+    getPosts: builder.query<Post[], null>({
+      query: () => `posts`,
+    }),
+    getPostById: builder.query<Post, number>({
+      query: (id) => `post/${id}`,
+    }),
+  }),
+});
+
+// auto-generated based on the defined endpoints
+export const { useGetPostsQuery, useGetPostByIdQuery } = api;
+```
+<!-- 
 -->
 
 ---
