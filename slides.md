@@ -8,6 +8,7 @@ background: https://source.unsplash.com/collection/94734566/1920x1080
 class: 'text-center'
 # https://sli.dev/custom/highlighters.html
 highlighter: monaco
+monaco: true
 # show line numbers in code blocks
 lineNumbers: false
 # some information about the slides, markdown enabled
@@ -40,7 +41,9 @@ A look into state management in react apps
     <carbon-logo-github />
   </a>
 </div>
-
+<!-- 
+Initially this was a presentation for State and patterns topic for Lib 2 and still is, just expands a bit beyond the Redux vs Context for state management topic.
+-->
 ---
 
 <h1><span>Quick Refresher on State</span>🥤</h1> 
@@ -58,9 +61,7 @@ A look into state management in react apps
 <!--
 Changes in the application happen usually at component level.
 
-Lifting does not mean going to global although in theory is posible.
-
-Before global state, some other solutions may exist but they rely more on component composition than state management
+Before global state, some other solutions may exist but they rely more on component composition than actual state management (smart vs dumb components)
 
 -->
 
@@ -77,23 +78,27 @@ image: https://source.unsplash.com/collection/94734566/1920x1080
 <h3 v-click>State Collocation</h3>
 <ul>
   <li v-click>Lifting State when maintainable</li>
-  <li v-click>Context & hooks for feature state</li>
-  <li v-click>Global State for rendering control</li>
+  <li v-click>Context specific cases</li>
+  <li v-click>Global State for larger scale</li>
 </ul>
 <br>
 <h3 v-click>UI State vs Server Data State</h3>
 <ul>
-  <li v-click>Merging State</li>
-  <li v-click>Spliting State</li>
-  <li v-click>Tools for each case</li>
+  <li v-click>A case for splitting</li>
+  <li v-click>Tools for spliting</li>
+  <li v-click>Best practices and implementations</li>
 </ul>
 
-<span  v-click class="text-gray-500">This is still redux vs context ⚔️ (not really)</span>
+<span  v-click class="text-gray-500">The goal is a solid set of State Management rules / practices</span>
 <br>
-<span  v-click class="text-gray-500"> ...and a bit of TypeScript 🙀</span>
+<span  v-click class="text-gray-500"> ...dont mind the TypeScript 🙀 (or mind it if you want...)</span>
 
 <!--
-Points we will be touching
+Points we will be touching.
+
+State collocation again, just refers to the different levels we have to manage state and how can we use them.
+
+UI vs Server State its just a topic about separating our UI or Client state from the Data that comes from APIs and that we usually also put in global state.
  -->
 ---
 
@@ -136,7 +141,7 @@ Think of this step as just a first line of deffence agaisnt sate managment probl
 const CounterPage: FC = () => {
   // Where is the count?
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="sm">
       <Counter /> {/* i have the count */}
       <CounterDisplay /> {/* i need count as well*/}
     </Container>
@@ -150,27 +155,13 @@ const CounterPage: FC = () => {
 <!-- 
 Does this mean we need to go global? NO!
 -->
----
-
-<h1><span>State Collocation</span></h1>
-<p>State management starts at component level.</p>
-
-<p>Seems like a perfect scenario for global state but...</p>
-
-<ul>
-  <li v-click>Will the navigation need count state... probably not.</li>
-  <li v-click>Will a user menu need count state... not likely</li>
-  <li v-click>Will the CounterDisplay need it... yes</li>
-</ul>
-
-<p v-click>That makes a good scenario for lifting up state.</p>
 
 ---
 
 <h1><span>State Collocation</span></h1>
 <p>State management starts at component level.</p>
 
-```tsx {all|3|4|8|9|16|21|all}
+```tsx {all|3|4|8|9|15|16|20|21|all}
 // Common parent CounterPage
 const CounterPage: FC = () => {
   const [count, setCount] = useState(0);
@@ -196,16 +187,16 @@ const CounterDisplay: FC<CounterDisplayType> = ({ count }) => {
 ```
 
 <!-- 
-A bit of light typescript to type component props as well.
+So we lift our state to CounterPage, the common parent and pass the state as props down 1 level.
 -->
 ---
 
 <h1><span>State Collocation</span></h1>
 <p>State management starts at component level.</p>
 
-<p>Lifting state up is not a bad solution for very specific components coupled together. However there is a fine line to cross whenever components outside of certain feature do need that state as well</p>
+<p>Lifting state up is not a bad solution for very specific components coupled together.</p>
 
-<p v-click>This is like just the first line of defense against State Managment problems, its worth considering when deppendent components are "close" to each other, therefore, prop drilling can be solved by composition.</p>
+<p v-click>This is like just the first line of defense against State Managment problems, its worth considering when deppendent components are "close" to each other in our component tree, therefore, prop drilling can be solved by composition.</p>
 
 <v-click>
 <p>Consider an example where CountDisplay needs to pass count to its own children:</p>
@@ -287,59 +278,222 @@ const CounterPage: FC = () => {
   );
 };
 ```
-<p v-click>This requires no changes for CounterBanner and count prop is not being drilled more than 1 level down. Still, with components tightly coupled like these, prop drilling a couple of levels is not that bad.</p>
+<p v-click>This requires no changes for CounterBanner and count prop is not being drilled more than 1 level down.</p>
+<p v-click>This is also an example on how State Collocation just made children components dumb, they only handle rendering, while state logic is in parent.</p>
+<!-- 
+This is just a tip to maybe save 1 or 2 levels of prop drilling when lifting up state makes sense. --- 
+And again, setting a rule like how deep we drill or how high we lift is something that needs to be done, maybe not right now but when preparring our architecture.
+-->
 
 ---
 
 <h1><span>State Collocation</span></h1>
-<p>Context vs Global State (with redux)</p>
+<p>Global State or Context</p>
 
-<p>When we found that our application requires this component's state to either lift too high or drill props too deep, we should start thinking on moving that state to a Context or Global State.</p>
+<p>When we found that components further in the component tree need that state, we will end up either lifting too high or drilling props too deep, this is when moving that state to a Global State is a better option.</p>
 
-<p v-click>Lets discuss each option:</p>
+<p v-click>What about React's own Context api?</p>
 
 <h3 v-click>Context</h3>
-<p v-click>✔️ Is natively in react</p>
-<p v-click>✔️ Easy to setup, provide and consume.</p>
-<p v-click>✔️ Providers can be combined just as reducers (just providers).</p>
+<ul>
+  <li v-click>Is natively in react</li>
+  <li v-click>Easy to setup, provide and consume.</li>
+  <li v-click>Context is meant to provide global data not prompt to change often.</li>
+  <li v-click>Is not meant to manage selective updates and re-rendering</li>
+</ul>
 
-<p v-click>Using Context can be a tempting and in some cases good option but it has serious drawbacks that need considering.</p>
+<p v-click>Context CAN be turned into a State Management tool, but just because it can, does not mean it should (or that is the best solution, which is not).</p>
 
----
+<p v-click>Context is a very good option to provide data that doesn't update often and that is needed throughout the whole application.</p>
 
-<h1><span>State Collocation</span></h1>
-<p>Context vs Global State (with redux)</p>
-
-<h3>Context</h3>
-<p v-click>❌ Rerendering performance issues.</p>
-<p v-click>❌ Does not support selectors.</p>
-<p v-click>❌ Not the best for frequent updates.</p>
-
-<p v-click>Using Context for features that related might be a good option, as long as we're ok with re-rendering all components consuming a given context. So this applies to the concept of related "close" components that might need to re-render together when state changes.</p>
-
-<p v-click>It is important to know that without selectors, no matter which props are being used and changed, all components deppending on that context will re-render.</p>
+<!-- 
+This means components further in the component tree need that state, that is when the app requires lifting to high or / and drilling too deep.
+-->
 
 ---
 
 <h1><span>State Collocation</span></h1>
-<p>Context vs Global State (with redux)</p>
+<p>Context</p>
 
-<h3 v-click>Global State With Redux</h3>
+<p>Lets take a simple ThemeContext:</p>
 
-<p v-click>When we need better control for re-rendering and we need state that needs to spread wider in our application, it would be a better option to go for Global State</p>
+```tsx{all|3-5|6|all}
+// Could also come from API
+const defaultTheme = {
+  accentColor: 'blue',
+  textColor: 'black',
+  bgColor: 'lightgrey',
+  changeTextColor: (color: string) => {}, // this will be set by provider
+};
 
-<h3>Redux</h3>
+```
+<p v-click>This could be considered initial state for theme.</p>
+
+<!-- 
+
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context</p>
+
+<p>Creating Context and Provider:</p>
+
+```tsx{all|1|3|4|6-12|14-18|all}
+export const ThemeContext = createContext<ThemeContextInterface>(defaultTheme);
+
+export const ThemeProvider: FC = ({ children }) => {
+  const [theme, setTheme] = useState<ThemeContextInterface>(defaultTheme);
+
+  const changeTextColor = (color: string) => {
+    if (theme.textColor !== color) {
+      const updatedTheme = { ...theme };
+      updatedTheme.textColor = color;
+      setTheme(updatedTheme);
+    }
+  };
+
+  return (
+    <ThemeContext.Provider value={{ ...theme, changeTextColor }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+```
+
+<!-- 
+Create the context --- Create the provider --- Create local state --- Modify the state -- Return the provider
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context</p>
+
+<p>Providing the Context:</p>
+
+```tsx{all|2-4|all}
+  <React.StrictMode>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+
+```
+<v-click>
+<p>Quick note on porvider's order:</p>
+
+```tsx{all|2|3|4|all}
+  <React.StrictMode>
+    <ContextProvider_1>
+      <ThemeProvider>
+        <ContextProvider_2>
+          <App />
+        </ContextProvider_2>
+      </ThemeProvider>
+    </ContextProvider_1>
+  </React.StrictMode>,
+
+```
+</v-click>
+
+<!-- 
+Create the context --- Create the provider --- Create local state --- Modify the state -- Return the provider
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context</p>
+
+<p>Consuming the context:</p>
+
+```tsx{all|2|8|11|4|all}
+const CounterDisplay: FC<CounterDisplayType> = ({ count, children }) => {
+  const { textColor, changeTextColor } = useContext(ThemeContext);
+
+  console.log('display rendering...'); // component will rerender when color is changed
+
+  return (
+    <>
+      <span style={{ margin: '0 12px', color: textColor }}>
+        Current count is {count}
+      </span>
+      <Button variant="contained" onClick={() => changeTextColor('red')}>
+        Change text color!
+      </Button>
+      {children}
+    </>
+  );
+};
+
+```
+
+<!-- 
+We get textColor and changeTextColor from context and use them in component, re-render will occur when button is clicked.
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Context</p>
+
+```tsx{all|2|17|9|all}
+const CounterBanner: FC<CounterBannerType> = ({ count }) => {
+  const { accentColor } = useContext(ThemeContext);
+  const bannerColor = count >= 10 ? 'lightgreen' : 'pink';
+  const countMessage =
+    count >= 10
+      ? `Congrats! you reached ${count} in the count`
+      : `Keep it up, you're still under 10`;
+
+  console.log('banner rendering...'); // Why?
+
+  return (
+    <div
+      style={{
+        background: bannerColor,
+        padding: '4px 18px',
+        marginTop: '12px',
+        color: accentColor, // this is not changed in context but still re-rendering
+      }}
+    >
+      <h3>{countMessage}</h3>
+    </div>
+  );
+};
+
+```
+
+<!-- 
+Context provided that theme state and a way to update it, however we now have an unexpected re-rendering in CounterBanner. So Context can manage state at some degree but it has a serious drawback in its unselective updates and re-renderings. This might not cause a problem when the data we store in them is not updated frequently and is needed through the whole application, like a full sized Theme.
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Global State with Redux</p>
+
+<p v-click>State that will update frequently, that will drive selective re-rendering and that is needed wider in our application, sits better at our Global State</p>
+
+<h3 v-click>Redux</h3>
 <p v-click>✔️ Wideley used and known.</p>
 <p v-click>✔️ Framework agnostic (Mostly).</p>
 <p v-click>✔️ Flexible workflow that allows more granular control.</p>
 <p v-click>✔️ Dev tools are pretty cool.</p>
 
-<p v-click>Redux has been out there for a while, its well documented and can work with many types of applications, it is a very powerful tool which can also make it a complicated one specially when applications get large.</p>
+<p v-click>Redux has been out there for a while, its well documented and can work with many types of applications.</p>
+
+<!-- 
+It also has some drawbacks as it is a big tool with powerful features.
+-->
 
 ---
 
 <h1><span>State Collocation</span></h1>
-<p>Context vs Global State (with redux)</p>
+<p>Global State with Redux</p>
 
 <h3>Redux</h3>
 <p v-click>❌ Boilerplate can be descriptive but also daunting.</p>
@@ -347,8 +501,39 @@ const CounterPage: FC = () => {
 <p v-click>❌ Requires more steps to test (this also applys to context at a smaller degree).</p>
 <p v-click>❌ Global State can grew big.</p>
 
-<p v-click></p>
+<p v-click>Some of these drawbacks have been addressed at some degree, Redux team it self recommends using Redux Toolkit.</p>
 
+<p v-click>Redux Toolkit reduces boilerplate and adds sugar syntax (or should i say "mutable") through immer.</p>
 
+<!-- 
+I will not go into details yet about redux since our next topic will visit 
+-->
 
 ---
+
+<h1><span>State Collocation</span></h1>
+<p>Let's summarize:</p>
+
+<ul>
+  <li v-click>State collocation is encouragement to organize state at different levels, not just Global State</li>
+  <li v-click>Defining ruleset about how deep we drill props or how up we lift state could help prevent further complications.</li>
+  <li v-click>Identifying and separating components that handle business logic through state vs rendering components is also important!.</li>
+  <li v-click>Data that will not update often and needs to be provided to the whole app can go to Context.</li>
+  <li v-click>State that will drive constant component updates and is needed wider in our app can go to Global State.</li>
+</ul>
+
+<!-- 
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>A case for splitting our Global State:</p>
+
+<ul>
+  <li v-click>State collocation is encouragement to organize state at different levels, not just Global State</li>
+  <li v-click>Defining ruleset about how deep we drill props or how up we lift state could help prevent further complications.</li>
+  <li v-click>Identifying and separating components that handle business logic through state vs rendering components is also important!.</li>
+  <li v-click>Data that will not update often and needs to be provided to the whole app can go to Context.</li>
+  <li v-click>State that will drive constant component updates and is needed wider in our app can go to Global State.</li>
+</ul>
