@@ -28,18 +28,8 @@ A look into state management in react apps
 
 <div class="pt-12">
   <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
-    Lets get started! <carbon:arrow-right class="inline"/>
+    Let's get started! <carbon:arrow-right class="inline"/>
   </span>
-</div>
-
-<div class="abs-br m-6 flex gap-2">
-  <button @click="$slidev.nav.openInEditor()" title="Open in Editor" class="text-xl icon-btn opacity-50 !border-none !hover:text-white">
-    <carbon:edit />
-  </button>
-  <a href="https://github.com/slidevjs/slidev" target="_blank" alt="GitHub"
-    class="text-xl icon-btn opacity-50 !border-none !hover:text-white">
-    <carbon-logo-github />
-  </a>
 </div>
 <!-- 
 Initially this was a presentation for State and patterns topic for Lib 2 and still is, just expands a bit beyond the Redux vs Context for state management topic.
@@ -94,11 +84,13 @@ image: https://source.unsplash.com/collection/94734566/1920x1080
 <span  v-click class="text-gray-500"> ...dont mind the TypeScript 🙀 (or mind it if you want...)</span>
 
 <!--
-Points we will be touching.
+Points we will be touching. ---
 
-State collocation again, just refers to the different levels we have to manage state and how can we use them.
+State collocation again, just refers to the different levels we have to manage state and how can we use them. ---
 
-UI vs Server State its just a topic about separating our UI or Client state from the Data that comes from APIs and that we usually also put in global state.
+UI vs Server State its just a topic about separating our UI or Client state from the Data that comes from APIs and that we usually also put in global state. ---
+
+Typescript is just there for commodity, tools i will be tyalking about are bui;lt with it but does not mean this is a strong type architecture or best practices, i might dig on that later on.
  -->
 ---
 
@@ -111,7 +103,7 @@ UI vs Server State its just a topic about separating our UI or Client state from
 <p  v-click>When several components need to reflect the same changing state, its recommend lifting the shared state up to their closest common parent.</p>
 
 <v-click>
-<p>Lets take a simple component for start:</p>
+<p>Let's take a simple component for start:</p>
 
 ```tsx {all|2|3|5|all}
 const Counter: FC = () => {
@@ -315,7 +307,7 @@ This means components further in the component tree need that state, that is whe
 <h1><span>State Collocation</span></h1>
 <p>Context</p>
 
-<p>Lets take a simple ThemeContext:</p>
+<p>Let's take a simple ThemeContext:</p>
 
 ```tsx{all|3-5|6|all}
 // Could also come from API
@@ -498,15 +490,135 @@ It also has some drawbacks as it is a big tool with powerful features.
 <h3>Redux</h3>
 <p v-click>❌ Boilerplate can be descriptive but also daunting.</p>
 <p v-click>❌ Tricky to maintain Global State and Context or component state together.</p>
-<p v-click>❌ Requires more steps to test (this also applys to context at a smaller degree).</p>
+<p v-click>❌ Requires more steps to test (this also applies to context at a smaller degree).</p>
 <p v-click>❌ Global State can grew big.</p>
 
-<p v-click>Some of these drawbacks have been addressed at some degree, Redux team it self recommends using Redux Toolkit.</p>
-
-<p v-click>Redux Toolkit reduces boilerplate and adds sugar syntax (or should i say "mutable") through immer.</p>
+<p v-click>Some of these drawbacks have been addressed at some degree, Redux team it self recommends using Redux Toolkit and has a strongly recommended guideline.</p>
 
 <!-- 
-I will not go into details yet about redux since our next topic will visit 
+I will not go into too much details yet about redux since our next topic will visit it as well
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Global State with Redux</p>
+
+<p v-click>Let's take our Counter state and put it into Global State.</p>
+
+<v-click>
+<p>First we create our store and type definitions inferred from that store</p>
+
+```ts{all|4|5-7|2|all}
+// store.ts
+import { configureStore } from '@reduxjs/toolkit';
+import counterReducer from '../features/counter/counterSlice';
+
+export const store = configureStore({
+  reducer: {
+    counter: counterReducer,
+  },
+});
+
+// Infer the `RootState` and `AppDispatch` types from the store itself
+export type RootState = ReturnType<typeof store.getState>;
+// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
+export type AppDispatch = typeof store.dispatch;
+
+```
+</v-click>
+
+
+<!-- 
+This creates a Redux store, and also automatically configure the Redux DevTools extension so that you can inspect the store while developing.
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Global State with Redux</p>
+
+<p>We define our counterSlice which will handle all the logic for our counter feature.</p>
+
+```tsx{all|1|4|6-14|9-13|16|17|all}
+import { createSlice } from '@reduxjs/toolkit';
+
+export interface CounterState { value: number; }
+const initialState: CounterState = { value: 0, };
+
+export const counterSlice = createSlice({
+  name: 'counter',
+  initialState,
+  reducers: {
+    increment: (state) => {
+      state.value += 1; // RT uses immer unde the hood to allow "mutable" logic in reducers.
+    },
+  },
+});
+
+export const { increment } = counterSlice.actions; // Action creators are generated for each case reducer function
+export default counterSlice.reducer;
+
+```
+<!-- 
+Within a given feature folder, the Redux logic for that feature should be written as a single "slice" file, preferably using the Redux Toolkit createSlice API. (This is also known as the "ducks" pattern). 
+-->
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Global State with Redux</p>
+
+<p>We provide it with react-redux's provider.</p>
+
+```tsx{all|1-2|6|all}
+import { Provider as ReduxProvider } from 'react-redux';
+import { store } from './app/store';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <ReduxProvider store={store}>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </ReduxProvider>
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+```
+
+<!-- 
+-->
+
+---
+
+<h1><span>State Collocation</span></h1>
+<p>Global State with Redux</p>
+
+<p>And we get state from redux with useSelector:</p>
+
+```tsx{all|1|5-6|10-12|all}
+import { useSelector, useDispatch } from 'react-redux';
+
+const Counter: FC = () => {
+  // No longer lifted state, now Redux State
+  const count = useSelector((state: RootState) => state.counter.value); // selective dependency for updates
+  const dispatch = useDispatch();
+
+  return (
+    <Container maxWidth="sm">
+      <CounterButton count={count} increment={() => dispatch(increment())} />
+      <CounterDisplay count={count}>
+        <CounterBanner count={count} />
+      </CounterDisplay>
+    </Container>
+  );
+};
+```
+<p v-click>Now every component in oour component tree can access the same way to Counter state (not that is needed).</p>
+
+<!-- 
+We refactored a bit this component to actually be the wrapper for the whole Counter feature. --- We might talk more about redux toolkit in the next topic so let's wrap it up
 -->
 
 ---
@@ -516,10 +628,51 @@ I will not go into details yet about redux since our next topic will visit
 
 <ul>
   <li v-click>State collocation is encouragement to organize state at different levels, not just Global State</li>
-  <li v-click>Defining ruleset about how deep we drill props or how up we lift state could help prevent further complications.</li>
+  <li v-click>Defining a ruleset about how deep we drill props or how up we lift state could help prevent further complications.</li>
   <li v-click>Identifying and separating components that handle business logic through state vs rendering components is also important!.</li>
+  <li v-click>Defining a ruleset to identify when and how a component can be graduated to feature or smart component its crucial to maintain a large pool of components!.</li>
   <li v-click>Data that will not update often and needs to be provided to the whole app can go to Context.</li>
   <li v-click>State that will drive constant component updates and is needed wider in our app can go to Global State.</li>
+</ul>
+
+<!-- 
+This is a simple and very just over the top (lacks the details) but more defined pattern to follow and break into specifics.
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>A case for splitting our Global State:</p>
+
+<p v-click>Web applications normally need to fetch data from a server in order to display it. They also usually need to make updates to that data, send those updates to the server, and keep the cached data on the client in sync with the data on the server.</p>
+
+<p v-click>Over the last couple years, the React community has come to realize that "data fetching and caching" is really a different set of concerns than "State Management".</p>
+
+<ul>
+  <li v-click>Tracking our loading states in order provide better UX for loading times, this can be integrated with suspense in some cases.</li>
+  <li v-click>Avoiding duplicate requests for the same dat, or again selectively updating pieces of it.</li>
+  <li v-click>Behind the scene updates and re-fetch to sync data for different users.</li>
+  <li v-click>Knowing when data is "out of date" to trigger this re-fetch</li>
+  <li v-click>Caching... (one of the hardest things to do in programming).</li>
+</ul>
+
+<!-- 
+Some of the concerns specific to server data state.
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>A case for splitting our Global State:</p>
+
+<p v-click>While we can use a state management library like Redux to fetch and cache data (thunk middleware), the use cases are different enough that it's worth using tools that are purpose-built for the data fetching use case.</p>
+
+<p v-click>Over that same time some technologies have arised as pioneers of this pattern, we will discuss some of them:</p>
+
+<ul>
+  <li v-click>SWR (short for Stale While Revalidate)</li>
+  <li v-click>React Query</li>
+  <li v-click>RTK Query (short for Redux ToolKit Query)</li>
 </ul>
 
 <!-- 
@@ -528,12 +681,151 @@ I will not go into details yet about redux since our next topic will visit
 ---
 
 <h1><span>UI State vs Server (Data) State</span></h1>
-<p>A case for splitting our Global State:</p>
+<p>SWR and React Query</p>
+
+<p>Both SWR and React Query have a similar approach to handling Server Data State, at least compared to RTK Query.</p>
+
+<p v-click>Let's go over some points on them:</p>
 
 <ul>
-  <li v-click>State collocation is encouragement to organize state at different levels, not just Global State</li>
-  <li v-click>Defining ruleset about how deep we drill props or how up we lift state could help prevent further complications.</li>
-  <li v-click>Identifying and separating components that handle business logic through state vs rendering components is also important!.</li>
-  <li v-click>Data that will not update often and needs to be provided to the whole app can go to Context.</li>
-  <li v-click>State that will drive constant component updates and is needed wider in our app can go to Global State.</li>
+  <li v-click>Both provide a set of hooks as their api to execute fetching, mutating, cahcing and cache invalidation.</li>
+  <li v-click>Their role is clear. To remove asynchronous data management and boilerplate from your application and replace it with just a few lines of code.</li>
+  <li v-click>At the same time this abstraction can make things a bit obscure compared to plain Redux</li>
+  <li v-click>At the time they are not framework agnostic, SWR integrates well and supports many features of Next.js, react query is a bit more universal.</li>
+  <li v-click>Both also have experimental support for Suspense.</li>
+  <li v-click>Both are built with TypeScript so they provide out of the box implementation with it if needed.</li>
 </ul>
+
+<!-- 
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>SWR and React Query</p>
+
+<p v-click>Let's take a quick example for implementing SWR</p>
+
+<v-click>
+
+<p>Configuring SWR globally:</p>
+
+```tsx{all|1-6|all}
+<SWRConfig
+  value={{
+    suspense: true,
+    fetcher: (url) => axios.get(url).then((res) => res.data),
+  }}
+>
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
+</SWRConfig>
+```
+</v-click>
+<!-- 
+-->
+
+---
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>SWR and React Query</p>
+
+<p>Using it directly:</p>
+
+```tsx{all|5|9-11|all}
+import useSWR from 'swr';
+import { FC } from 'react';
+import { Post } from '../../services/api';
+
+const PostList: FC = () => {
+  /* error and loading state can also be obtained from useSWR */
+  const { data } = useSWR('https://jsonplaceholder.typicode.com/posts');
+
+  return (
+    <ul>
+      {data?.map((post: Post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+};
+
+```
+<p v-click>Notice how we dont need to validate data due to experimental Suspense support.</p>
+<!-- 
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>SWR and React Query</p>
+
+<p>When building a web app, you might need to reuse the data in many places of the UI. It is incredibly easy to create reusable data hooks on top of SWR:</p>
+
+```tsx
+const usePosts = () => {
+  const { data, error } = useSWR(`https://jsonplaceholder.typicode.com/posts`)
+
+  return {
+    posts: data,
+    isLoading: !error && !data,
+    isError: error
+  }
+};
+
+```
+<!-- 
+We would end up consuming usePosts wherever we need posts data.
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>SWR and React Query</p>
+
+<p>This is how we would wrap with Suspense:</p>
+
+```tsx{all|4|5|6|all}
+const PostPageSWR: FC = () => {
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <ErrorBoundary fallback={<p>Could not fetch data</p>}>
+        <Suspense fallback={<CircularProgress />}>
+          <PostListSWR />
+        </Suspense>
+      </ErrorBoundary>
+    </Box>
+  );
+};
+
+```
+
+<p v-click>As you can see is easy to use and share, it handles all of the data in a global cache and is also lightweight. React Query works in a very similar way.</p>
+<!-- 
+ErrorBoundary catches errors bubling up from components below.
+-->
+
+---
+
+<h1><span>UI State vs Server (Data) State</span></h1>
+<p>RKT Query</p>
+
+<p>This is how we would wrap with Suspense:</p>
+
+```tsx{all|5|9-11|all}
+const usePosts = () => {
+  const { data, error } = useSWR(`https://jsonplaceholder.typicode.com/posts`)
+
+  return {
+    posts: data,
+    isLoading: !error && !data,
+    isError: error
+  }
+};
+
+```
+<!-- 
+We would end up consuming usePosts wherever we need posts data.
+-->
+
+---
